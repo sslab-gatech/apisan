@@ -1,0 +1,30 @@
+From 7df1193d567c5734c5a4fd3b9049d32fd53ab614 Mon Sep 17 00:00:00 2001
+From: Insu Yun <wuninsu@gmail.com>
+Date: Wed, 20 Jan 2016 11:16:51 -0500
+Subject: [PATCH] ext4: fix potential integer overflow
+
+Since sizeof(ext_new_group_data) > sizeof(ext_new_flex_group_data),
+integer overflow could be happened.
+Therefore, need to fix integer overflow sanitization.
+
+Signed-off-by: Insu Yun <wuninsu@gmail.com>
+---
+ fs/ext4/resize.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/fs/ext4/resize.c b/fs/ext4/resize.c
+index ad62d7a..34038e3 100644
+--- a/fs/ext4/resize.c
++++ b/fs/ext4/resize.c
+@@ -198,7 +198,7 @@ static struct ext4_new_flex_group_data *alloc_flex_gd(unsigned long flexbg_size)
+ 	if (flex_gd == NULL)
+ 		goto out3;
+ 
+-	if (flexbg_size >= UINT_MAX / sizeof(struct ext4_new_flex_group_data))
++	if (flexbg_size >= UINT_MAX / sizeof(struct ext4_new_group_data))
+ 		goto out2;
+ 	flex_gd->count = flexbg_size;
+ 
+-- 
+1.9.1
+

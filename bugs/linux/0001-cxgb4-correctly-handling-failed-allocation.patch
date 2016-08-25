@@ -1,0 +1,31 @@
+From 456081a2237bf42935d58b5d9db67ff2a61d5400 Mon Sep 17 00:00:00 2001
+From: Insu Yun <wuninsu@gmail.com>
+Date: Tue, 29 Dec 2015 17:19:19 -0500
+Subject: [PATCH] cxgb4: correctly handling failed allocation
+
+Since t4_alloc_mem can be failed in memory pressure,
+if not properly handled, NULL dereference could be happened.
+
+Signed-off-by: Insu Yun <wuninsu@gmail.com>
+---
+ drivers/net/ethernet/chelsio/cxgb4/clip_tbl.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/drivers/net/ethernet/chelsio/cxgb4/clip_tbl.c b/drivers/net/ethernet/chelsio/cxgb4/clip_tbl.c
+index c308429..11dd91e 100644
+--- a/drivers/net/ethernet/chelsio/cxgb4/clip_tbl.c
++++ b/drivers/net/ethernet/chelsio/cxgb4/clip_tbl.c
+@@ -295,6 +295,10 @@ struct clip_tbl *t4_init_clip_tbl(unsigned int clipt_start,
+ 		INIT_LIST_HEAD(&ctbl->hash_list[i]);
+ 
+ 	cl_list = t4_alloc_mem(clipt_size*sizeof(struct clip_entry));
++	if (!cl_list) {
++		t4_free_mem(ctbl);
++		return NULL;
++	}
+ 	ctbl->cl_list = (void *)cl_list;
+ 
+ 	for (i = 0; i < clipt_size; i++) {
+-- 
+1.9.1
+

@@ -1,0 +1,30 @@
+From eea879f0692cf12594391cff0de4372f3f1c7614 Mon Sep 17 00:00:00 2001
+From: Insu Yun <wuninsu@gmail.com>
+Date: Thu, 24 Sep 2015 21:57:17 +0000
+Subject: [PATCH] mlx4: corretly check failed allocation
+
+When allocation fails, mlx4_alloc_cmd_mailbox returns -ENOMEM.
+Since there is no case that mlx4_alloc_cmd_mailbox returns NULL,
+it needs to be checked by IS_ERR, not IS_ERR_OR_NULL
+
+Signed-off-by: Insu Yun <wuninsu@gmail.com>
+---
+ drivers/net/ethernet/mellanox/mlx4/mr.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/net/ethernet/mellanox/mlx4/mr.c b/drivers/net/ethernet/mellanox/mlx4/mr.c
+index 78f51e1..9319519 100644
+--- a/drivers/net/ethernet/mellanox/mlx4/mr.c
++++ b/drivers/net/ethernet/mellanox/mlx4/mr.c
+@@ -318,7 +318,7 @@ int mlx4_mr_hw_get_mpt(struct mlx4_dev *dev, struct mlx4_mr *mmr,
+ 				key, NULL);
+ 	} else {
+ 		mailbox = mlx4_alloc_cmd_mailbox(dev);
+-		if (IS_ERR_OR_NULL(mailbox))
++		if (IS_ERR(mailbox))
+ 			return PTR_ERR(mailbox);
+ 
+ 		err = mlx4_cmd_box(dev, 0, mailbox->dma, key,
+-- 
+1.9.1
+

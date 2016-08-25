@@ -1,0 +1,67 @@
+From 93dee72f8a35fd4c0b279a0a449130cb143af6a0 Mon Sep 17 00:00:00 2001
+From: Insu Yun <wuninsu@gmail.com>
+Date: Sat, 21 Nov 2015 22:58:48 -0500
+Subject: [PATCH] fix memory leak in utils_str_reduce_exponant_from_string
+
+Signed-off-by: Insu Yun <wuninsu@gmail.com>
+---
+ src/utils_str.c | 16 ++++++++++------
+ 1 file changed, 10 insertions(+), 6 deletions(-)
+
+diff --git a/src/utils_str.c b/src/utils_str.c
+index 397e899..6f915cd 100644
+--- a/src/utils_str.c
++++ b/src/utils_str.c
+@@ -111,7 +111,7 @@ gchar *utils_str_itoa ( gint integer )
+ gchar *utils_str_reduce_exponant_from_string ( const gchar *amount_string,
+                         gint exponent )
+ {
+-    gchar *return_string;
++    gchar *return_string = NULL;
+     gchar *p;
+     gchar *mon_decimal_point;
+     gunichar decimal_point = (gunichar )-2;
+@@ -125,9 +125,7 @@ gchar *utils_str_reduce_exponant_from_string ( const gchar *amount_string,
+     if ( mon_decimal_point )
+         decimal_point = g_utf8_get_char_validated ( mon_decimal_point, -1 );
+ 
+-    return_string = my_strdup ( amount_string );
+-
+-    if ( ( p = g_utf8_strrchr ( (const gchar *) return_string, -1, '.' ) ) )
++    if ( ( p = g_utf8_strrchr ( (const gchar *) amount_string, -1, '.' ) ) )
+     {
+         if ( g_unichar_isdefined ( decimal_point )
+          &&
+@@ -141,8 +139,10 @@ gchar *utils_str_reduce_exponant_from_string ( const gchar *amount_string,
+             p = g_utf8_strrchr ( (const gchar *) return_string, -1,
+                         decimal_point );
+         }
++        else
++          return_string = my_strdup( amount_string );
+     }
+-    else if ( ( p = g_utf8_strrchr ( (const gchar *) return_string, -1, ',' ) ) )
++    else if ( ( p = g_utf8_strrchr ( (const gchar *) amount_string, -1, ',' ) ) )
+     {
+         if ( g_unichar_isdefined ( decimal_point )
+          &&
+@@ -156,12 +156,16 @@ gchar *utils_str_reduce_exponant_from_string ( const gchar *amount_string,
+             p = g_utf8_strrchr ( (const gchar *) return_string, -1,
+                         decimal_point );
+         }
++        else
++          return_string = my_strdup( amount_string );
+     }
+     else
+-        return NULL;
++      goto cleanup;
+ 
+     p[exponent + 1] = '\0';
+ 
++cleanup:
++    g_free(mon_decimal_point);
+     return return_string;
+ }
+ 
+-- 
+1.9.1
+

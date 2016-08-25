@@ -1,0 +1,29 @@
+From fba61992a683adaf148053dc280dab07d3b653b3 Mon Sep 17 00:00:00 2001
+From: Insu Yun <wuninsu@gmail.com>
+Date: Mon, 15 Feb 2016 21:18:44 -0500
+Subject: [PATCH] gpio-mcp23s08: correctly handling failed allocation
+
+Since devm_kzalloc can be failed in memory pressure,
+it needs to check and return -ENOMEM
+
+Signed-off-by: Insu Yun <wuninsu@gmail.com>
+---
+ drivers/gpio/gpio-mcp23s08.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/gpio/gpio-mcp23s08.c b/drivers/gpio/gpio-mcp23s08.c
+index c767879..ed51dcf 100644
+--- a/drivers/gpio/gpio-mcp23s08.c
++++ b/drivers/gpio/gpio-mcp23s08.c
+@@ -803,6 +803,8 @@ static int mcp230xx_probe(struct i2c_client *client,
+ 			pdata = devm_kzalloc(&client->dev,
+ 					sizeof(struct mcp23s08_platform_data),
+ 					GFP_KERNEL);
++			if (!pdata)
++				return -ENOMEM;
+ 			pdata->base = -1;
+ 		}
+ 	}
+-- 
+1.9.1
+

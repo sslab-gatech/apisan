@@ -1,0 +1,43 @@
+From 5bc9e98c8d57180519a001d27599f1a05c5bcab8 Mon Sep 17 00:00:00 2001
+From: Insu Yun <wuninsu@gmail.com>
+Date: Fri, 20 Nov 2015 16:57:55 -0500
+Subject: [PATCH] ssl: correctly check SSL_get_verify_result()
+
+According to OpenSSL document
+(https://www.openssl.org/docs/manmaster/ssl/SSL_get_verify_result.html),
+when using SSL_get_verify_result(),
+the existence of certificate needs to be checked.
+However, in current code, it does not.
+Therefore, certificate existence check is required for correctly handling the exception.
+
+Signed-off-by: Insu Yun <wuninsu@gmail.com>
+---
+ src/common/server.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/src/common/server.c b/src/common/server.c
+index 8ff8155..215ced0 100644
+--- a/src/common/server.c
++++ b/src/common/server.c
+@@ -590,6 +590,9 @@ ssl_do_connect (server * serv)
+ 		case X509_V_OK:
+ 			{
+ 				X509 *cert = SSL_get_peer_certificate (serv->ssl);
++				if (!cert)
++					goto conn_fail;
++
+ 				int hostname_err;
+ 				if ((hostname_err = _SSL_check_hostname(cert, serv->hostname)) != 0)
+ 				{
+@@ -1649,7 +1652,7 @@ server_set_encoding (server *serv, char *new_encoding)
+ 	if (new_encoding)
+ 	{
+ 		serv->encoding = g_strdup (new_encoding);
+-		/* the serverlist GUI might have added a space 
++		/* the serverlist GUI might have added a space
+ 			and short description - remove it. */
+ 		space = strchr (serv->encoding, ' ');
+ 		if (space)
+-- 
+1.9.1
+

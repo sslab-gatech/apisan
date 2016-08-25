@@ -1,0 +1,27 @@
+From d97aa6079847f7af2cb02890027380c12e6dac5d Mon Sep 17 00:00:00 2001
+From: Insu Yun <wuninsu@gmail.com>
+Date: Tue, 17 Nov 2015 15:35:28 -0500
+Subject: [PATCH] m5602: correctly check failed thread creation
+
+Signed-off-by: Insu Yun <wuninsu@gmail.com>
+---
+ drivers/media/usb/gspca/m5602/m5602_s5k83a.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/drivers/media/usb/gspca/m5602/m5602_s5k83a.c b/drivers/media/usb/gspca/m5602/m5602_s5k83a.c
+index bf6b215..84b2961 100644
+--- a/drivers/media/usb/gspca/m5602/m5602_s5k83a.c
++++ b/drivers/media/usb/gspca/m5602/m5602_s5k83a.c
+@@ -221,6 +221,9 @@ int s5k83a_start(struct sd *sd)
+ 	   to assume that there is no better way of accomplishing this */
+ 	sd->rotation_thread = kthread_create(rotation_thread_function,
+ 					     sd, "rotation thread");
++	if (IS_ERR(sd->rotation_thread))
++		return PTR_ERR(sd->rotation_thread);
++
+ 	wake_up_process(sd->rotation_thread);
+ 
+ 	/* Preinit the sensor */
+-- 
+1.9.1
+

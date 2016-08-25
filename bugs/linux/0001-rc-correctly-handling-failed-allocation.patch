@@ -1,0 +1,38 @@
+From 55acd0621cabe842da6e212a9aa54bc99128241f Mon Sep 17 00:00:00 2001
+From: Insu Yun <wuninsu@gmail.com>
+Date: Mon, 15 Feb 2016 21:32:28 -0500
+Subject: [PATCH] rc: correctly handling failed allocation
+
+Since rc_allocate_device() uses kmalloc,
+it can returns NULL, so need to check, 
+otherwise, NULL derefenrece can be happened.
+
+Signed-off-by: Insu Yun <wuninsu@gmail.com>
+---
+ drivers/media/rc/igorplugusb.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/drivers/media/rc/igorplugusb.c b/drivers/media/rc/igorplugusb.c
+index b36e515..df37cd5 100644
+--- a/drivers/media/rc/igorplugusb.c
++++ b/drivers/media/rc/igorplugusb.c
+@@ -191,6 +191,8 @@ static int igorplugusb_probe(struct usb_interface *intf,
+ 	usb_make_path(udev, ir->phys, sizeof(ir->phys));
+ 
+ 	rc = rc_allocate_device();
++	if (!rc)
++		goto fail;
+ 	rc->input_name = DRIVER_DESC;
+ 	rc->input_phys = ir->phys;
+ 	usb_to_input_id(udev, &rc->input_id);
+@@ -213,6 +215,7 @@ static int igorplugusb_probe(struct usb_interface *intf,
+ 	ir->rc = rc;
+ 	ret = rc_register_device(rc);
+ 	if (ret) {
++fail:
+ 		dev_err(&intf->dev, "failed to register rc device: %d", ret);
+ 		rc_free_device(rc);
+ 		usb_free_urb(ir->urb);
+-- 
+1.9.1
+

@@ -1,0 +1,42 @@
+From 0041ae09687321e3cd2069c04b87beaf80fd850d Mon Sep 17 00:00:00 2001
+From: Insu Yun <wuninsu@gmail.com>
+Date: Thu, 15 Oct 2015 10:59:57 +0000
+Subject: [PATCH] fmc: correctly handle failed allocation
+
+Since kmemdup can be failed in memory pressure,
+return value should be checked and return -ENOMEM.
+
+Signed-off-by: Insu Yun <wuninsu@gmail.com>
+---
+ drivers/fmc/fmc-fakedev.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/drivers/fmc/fmc-fakedev.c b/drivers/fmc/fmc-fakedev.c
+index 941d093..0515909 100644
+--- a/drivers/fmc/fmc-fakedev.c
++++ b/drivers/fmc/fmc-fakedev.c
+@@ -282,6 +282,8 @@ static struct ff_dev *ff_dev_create(void)
+ 	for (i = 0; i < ff_nr_dev; i++) {
+ 		fmc = kmemdup(&ff_template_fmc, sizeof(ff_template_fmc),
+ 			      GFP_KERNEL);
++    if (!fmc)
++      goto no_memory;
+ 		fmc->hwdev = &ff->dev;
+ 		fmc->carrier_data = ff;
+ 		fmc->nr_slots = ff_nr_dev;
+@@ -294,6 +296,12 @@ static struct ff_dev *ff_dev_create(void)
+ 		ff_template_fmc.device_id++;
+ 	}
+ 	return ff;
++
++no_memory:
++  for (i--; i >= 0; i--)
++    kfree(ff->fmc[i]);
++  kfree(ff);
++  return ERR_PTR(-ENOMEM);
+ }
+ 
+ /* init and exit */
+-- 
+1.9.1
+

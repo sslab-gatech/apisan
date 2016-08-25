@@ -1,0 +1,131 @@
+From 7871bfd12c0d9f7de96d12cf41bfa608fa8074e7 Mon Sep 17 00:00:00 2001
+From: Insu Yun <wuninsu@gmail.com>
+Date: Thu, 31 Dec 2015 10:25:55 -0500
+Subject: [PATCH] Check return value of BIO_new_file
+
+BIO_new_file can be failed when a file does not existed.
+Even though before calling aff_bom:read_files check whether a file is
+existed or not, it can be failed when file is deleted in context
+switching(race condition). Therefore, it seems better to check the
+return value of BIO_new_file.
+
+Signed-off-by: Insu Yun <wuninsu@gmail.com>
+---
+ lib/aftest.cpp    |  9 +++++++++
+ tools/aff_bom.cpp | 20 +++++++++++---------
+ 2 files changed, 20 insertions(+), 9 deletions(-)
+
+diff --git a/lib/aftest.cpp b/lib/aftest.cpp
+index a46edea..c568e6c 100644
+--- a/lib/aftest.cpp
++++ b/lib/aftest.cpp
+@@ -764,6 +764,10 @@ void rsatest()
+     uint32_t  siglen = sizeof(sig);
+ 
+     BIO *bp = BIO_new_file("signing_key.pem","r");
++    if (!bp) {
++      perror("BIO_new_file");
++      return;
++    }
+ 
+     EVP_MD_CTX md;
+     EVP_PKEY *pkey = PEM_read_bio_PrivateKey(bp,0,0,0);
+@@ -774,6 +778,11 @@ void rsatest()
+ 
+     /* let's try to verify it */
+     bp = BIO_new_file("signing_cert.pem","r");
++    if (!bp) {
++      perror("BIO_new_file");
++      return;
++    }
++
+     X509 *x = 0;
+     PEM_read_bio_X509(bp,&x,0,0);
+     EVP_PKEY *pubkey = X509_get_pubkey(x);
+diff --git a/tools/aff_bom.cpp b/tools/aff_bom.cpp
+index f6b26b1..72d7b46 100644
+--- a/tools/aff_bom.cpp
++++ b/tools/aff_bom.cpp
+@@ -13,7 +13,7 @@
+  * United States Government and/or for any works created by United
+  * States Government employees. User acknowledges that this software
+  * contains work which was created by NPS employee(s) and is therefore
+- * in the public domain and not subject to copyright.  
++ * in the public domain and not subject to copyright.
+  * --------------------------------------------------------------------
+  *
+  * Change History:
+@@ -97,7 +97,7 @@ char *aff_bom::get_notes()
+     while(notes){
+ 	char buf2[1024];
+ 	char *val=0;
+-	
++
+ #ifdef HAVE_LIBREADLINE
+ 	if(isatty(fileno(stdin))){
+ 	    val = readline("");
+@@ -120,10 +120,12 @@ char *aff_bom::get_notes()
+ int aff_bom::read_files(const char *cert_file,const char *key_file)
+ {
+     BIO *bp_cert = BIO_new_file(cert_file,"r"); // read the certfile
++    if (!bp_cert)
++      return -1;
+     PEM_read_bio_X509(bp_cert,&cert,0,0); // get an x509 cert
+     BIO_free(bp_cert);
+     if(!cert) return -1;		// can't read certificate file
+-	
++
+     /* Now read the private key */
+     BIO *bp_privkey = BIO_new_file(key_file,"r");
+     privkey = PEM_read_bio_PrivateKey(bp_privkey,0,0,0);
+@@ -133,14 +135,14 @@ int aff_bom::read_files(const char *cert_file,const char *key_file)
+ 	cert = 0;
+ 	return -1;
+     }
+-	
++
+     bom_open = true;
+     xml = BIO_new(BIO_s_mem());	// where we are writing
+     time_t clock = time(0);
+     struct tm *tm = localtime(&clock);
+     char timebuf[1024];
+     strftime(timebuf,sizeof(timebuf),"<date type='ISO 8601'>%FT%T</date>",tm);
+-    
++
+     BIO_printf(xml,"<%s version=\"1\">\n",AF_XML_AFFBOM);
+     BIO_printf(xml,"  %s\n",timebuf);
+     BIO_printf(xml,"  <program>afcopy</program>\n");
+@@ -185,18 +187,18 @@ void aff_bom::close()
+ 	size_t xlen = BIO_get_mem_data(xml,&xbuf);
+ 	unsigned char sig[1024];
+ 	u_int  siglen = sizeof(sig);
+-	
++
+ 	EVP_MD_CTX md;
+ 	EVP_SignInit(&md,sha256);
+ 	EVP_SignUpdate(&md,xbuf,xlen);
+ 	EVP_SignFinal(&md,sig,&siglen,privkey);
+-    
++
+ 	/* Write the signature in base64 encoding... */
+ 	BIO *b64 = BIO_new(BIO_f_base64());
+ 	xml = BIO_push(b64,xml);
+ 	BIO_write(xml,sig,siglen);
+ 	if(BIO_flush(xml)!=1) return;	// something wrong
+-	
++
+ 	/* Remove the base64 bio */
+ 	xml = BIO_pop(b64);
+     }
+@@ -248,7 +250,7 @@ int aff_bom::add(AFFILE *af,const char *segname)
+     add(segname,AF_SIGNATURE_MODE0,seghash,sizeof(seghash));
+     free(segdata);
+     return(0);
+-    
++
+ }
+ 
+ 
+-- 
+1.9.1
+

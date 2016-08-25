@@ -1,0 +1,29 @@
+From 5b0428681b632234b47a6db1754c5a371eafe7be Mon Sep 17 00:00:00 2001
+From: Insu Yun <wuninsu@gmail.com>
+Date: Wed, 30 Dec 2015 10:57:14 -0500
+Subject: [PATCH v2] i915: correctly handling failed allocation
+
+Since devm_kzalloc can be failed, it needs to be checked
+if not, NULL dereference could be happened.
+
+Signed-off-by: Insu Yun <wuninsu@gmail.com>
+---
+ drivers/gpu/drm/i915/intel_dsi_panel_vbt.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/gpu/drm/i915/intel_dsi_panel_vbt.c b/drivers/gpu/drm/i915/intel_dsi_panel_vbt.c
+index a5e99ac..aa1f7bc 100644
+--- a/drivers/gpu/drm/i915/intel_dsi_panel_vbt.c
++++ b/drivers/gpu/drm/i915/intel_dsi_panel_vbt.c
+@@ -666,6 +666,8 @@ struct drm_panel *vbt_panel_init(struct intel_dsi *intel_dsi, u16 panel_id)
+ 
+ 	/* This is cheating a bit with the cleanup. */
+ 	vbt_panel = devm_kzalloc(dev->dev, sizeof(*vbt_panel), GFP_KERNEL);
++	if (!vbt_panel)
++		return NULL;
+ 
+ 	vbt_panel->intel_dsi = intel_dsi;
+ 	drm_panel_init(&vbt_panel->panel);
+-- 
+1.9.1
+

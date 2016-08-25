@@ -1,0 +1,107 @@
+From 354a8f14ee6d97266818837b70d284d5f673db3b Mon Sep 17 00:00:00 2001
+From: Insu Yun <wuninsu@gmail.com>
+Date: Mon, 19 Oct 2015 16:31:30 +0000
+Subject: [PATCH] drm: correctly check failed allocation
+
+drm_property_create_range can be failed in memory pressure
+Therefore, check return value and handle an error
+
+Signed-off-by: Insu Yun <wuninsu@gmail.com>
+---
+ drivers/gpu/drm/drm_crtc.c | 30 ++++++++++++++++++++++++++++++
+ 1 file changed, 30 insertions(+)
+
+diff --git a/drivers/gpu/drm/drm_crtc.c b/drivers/gpu/drm/drm_crtc.c
+index 33d877c..5fb6583 100644
+--- a/drivers/gpu/drm/drm_crtc.c
++++ b/drivers/gpu/drm/drm_crtc.c
+@@ -1525,6 +1525,9 @@ int drm_mode_create_tv_properties(struct drm_device *dev,
+ 					  "select subconnector",
+ 					  drm_tv_select_enum_list,
+ 					  ARRAY_SIZE(drm_tv_select_enum_list));
++	if (!tv_selector)
++		goto nomem;
++
+ 	dev->mode_config.tv_select_subconnector_property = tv_selector;
+ 
+ 	tv_subconnector =
+@@ -1532,6 +1535,8 @@ int drm_mode_create_tv_properties(struct drm_device *dev,
+ 				    "subconnector",
+ 				    drm_tv_subconnector_enum_list,
+ 				    ARRAY_SIZE(drm_tv_subconnector_enum_list));
++	if (!tv_subconnector)
++		goto nomem;
+ 	dev->mode_config.tv_subconnector_property = tv_subconnector;
+ 
+ 	/*
+@@ -1539,42 +1544,67 @@ int drm_mode_create_tv_properties(struct drm_device *dev,
+ 	 */
+ 	dev->mode_config.tv_left_margin_property =
+ 		drm_property_create_range(dev, 0, "left margin", 0, 100);
++	if (!dev->mode_config.tv_left_margin_property)
++		goto nomem;
+ 
+ 	dev->mode_config.tv_right_margin_property =
+ 		drm_property_create_range(dev, 0, "right margin", 0, 100);
++	if (!dev->mode_config.tv_right_margin_property)
++		goto nomem;
+ 
+ 	dev->mode_config.tv_top_margin_property =
+ 		drm_property_create_range(dev, 0, "top margin", 0, 100);
++	if (!dev->mode_config.tv_top_margin_property)
++		goto nomem;
+ 
+ 	dev->mode_config.tv_bottom_margin_property =
+ 		drm_property_create_range(dev, 0, "bottom margin", 0, 100);
++	if (!dev->mode_config.tv_bottom_margin_property)
++		goto nomem;
+ 
+ 	dev->mode_config.tv_mode_property =
+ 		drm_property_create(dev, DRM_MODE_PROP_ENUM,
+ 				    "mode", num_modes);
++	if (!dev->mode_config.tv_mode_property)
++		goto nomem;
++
+ 	for (i = 0; i < num_modes; i++)
+ 		drm_property_add_enum(dev->mode_config.tv_mode_property, i,
+ 				      i, modes[i]);
+ 
+ 	dev->mode_config.tv_brightness_property =
+ 		drm_property_create_range(dev, 0, "brightness", 0, 100);
++	if (!dev->mode_config.tv_brightness_property)
++		goto nomem;
+ 
+ 	dev->mode_config.tv_contrast_property =
+ 		drm_property_create_range(dev, 0, "contrast", 0, 100);
++	if (!dev->mode_config.tv_contrast_property)
++		goto nomem;
+ 
+ 	dev->mode_config.tv_flicker_reduction_property =
+ 		drm_property_create_range(dev, 0, "flicker reduction", 0, 100);
++	if (!dev->mode_config.tv_flicker_reduction_property)
++		goto nomem;
+ 
+ 	dev->mode_config.tv_overscan_property =
+ 		drm_property_create_range(dev, 0, "overscan", 0, 100);
++	if (!dev->mode_config.tv_overscan_property)
++		goto nomem;
+ 
+ 	dev->mode_config.tv_saturation_property =
+ 		drm_property_create_range(dev, 0, "saturation", 0, 100);
++	if (!dev->mode_config.tv_saturation_property)
++		goto nomem;
+ 
+ 	dev->mode_config.tv_hue_property =
+ 		drm_property_create_range(dev, 0, "hue", 0, 100);
++	if (!dev->mode_config.tv_hue_property)
++		goto nomem;
+ 
+ 	return 0;
++nomem:
++	return -ENOMEM;
+ }
+ EXPORT_SYMBOL(drm_mode_create_tv_properties);
+ 
+-- 
+1.9.1
+

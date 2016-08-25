@@ -1,0 +1,28 @@
+From f6531ef931af9edb7193c8a474af457bb93c4e5c Mon Sep 17 00:00:00 2001
+From: Insu Yun <wuninsu@gmail.com>
+Date: Sat, 30 Jan 2016 10:07:30 -0500
+Subject: [PATCH] clk: unlock for handling unregisterd clock
+
+If clock is already unregistered, it returns with holding lock.
+It needs to be unlocked.
+
+Signed-off-by: Insu Yun <wuninsu@gmail.com>
+---
+ drivers/clk/clk.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/clk/clk.c b/drivers/clk/clk.c
+index b4db67a..9cc2d08 100644
+--- a/drivers/clk/clk.c
++++ b/drivers/clk/clk.c
+@@ -2683,6 +2683,7 @@ void clk_unregister(struct clk *clk)
+ 	if (clk->core->ops == &clk_nodrv_ops) {
+ 		pr_err("%s: unregistered clock: %s\n", __func__,
+ 		       clk->core->name);
++		clk_prepare_unlock();
+ 		return;
+ 	}
+ 	/*
+-- 
+1.9.1
+

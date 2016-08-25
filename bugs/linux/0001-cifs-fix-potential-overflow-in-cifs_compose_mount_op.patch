@@ -1,0 +1,29 @@
+From beb69637321d9c7239d60490c6c029d278c64591 Mon Sep 17 00:00:00 2001
+From: Insu Yun <wuninsu@gmail.com>
+Date: Mon, 1 Feb 2016 11:33:11 -0500
+Subject: [PATCH] cifs: fix potential overflow in cifs_compose_mount_options
+
+In worst case, "ip=" + sb_mountdata + ipv6 can be copied into mountdata.
+Therefore, for safe, it is better to add more size when allocating memory.
+
+Signed-off-by: Insu Yun <wuninsu@gmail.com>
+---
+ fs/cifs/cifs_dfs_ref.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/fs/cifs/cifs_dfs_ref.c b/fs/cifs/cifs_dfs_ref.c
+index 7dc886c..e956cba 100644
+--- a/fs/cifs/cifs_dfs_ref.c
++++ b/fs/cifs/cifs_dfs_ref.c
+@@ -175,7 +175,7 @@ char *cifs_compose_mount_options(const char *sb_mountdata,
+ 	 * string to the length of the original string to allow for worst case.
+ 	 */
+ 	md_len = strlen(sb_mountdata) + INET6_ADDRSTRLEN;
+-	mountdata = kzalloc(md_len + 1, GFP_KERNEL);
++	mountdata = kzalloc(md_len + sizeof("ip=") + 1, GFP_KERNEL);
+ 	if (mountdata == NULL) {
+ 		rc = -ENOMEM;
+ 		goto compose_mount_options_err;
+-- 
+1.9.1
+

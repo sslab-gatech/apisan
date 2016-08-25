@@ -1,0 +1,18 @@
+diff -uNr libsylph/libsylph/mh.c libsylph_new/libsylph/mh.c
+--- libsylph/libsylph/mh.c	2015-11-20 12:00:24.085310000 -0500
++++ libsylph_new/libsylph/mh.c	2015-11-20 12:01:41.437758127 -0500
+@@ -1205,9 +1205,13 @@
+ {
+ 	gchar *path;
+ 	struct stat s;
++	int result;
+ 
+ 	path = folder_item_get_path(item);
+-	if (g_stat(path, &s) < 0) {
++	result = g_stat(path, &s);
++	g_free(path);
++
++	if (result < 0) {
+ 		FILE_OP_ERROR(path, "stat");
+ 		return -1;
+ 	} else {

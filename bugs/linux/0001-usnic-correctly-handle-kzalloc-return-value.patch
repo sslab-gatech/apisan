@@ -1,0 +1,42 @@
+From 76e5052d13f203278d2db4bf2a91eebec4d339d4 Mon Sep 17 00:00:00 2001
+From: Insu Yun <wuninsu@gmail.com>
+Date: Sat, 17 Oct 2015 19:05:13 +0000
+Subject: [PATCH] usnic: correctly handle kzalloc return value
+
+Since kzalloc returns memory address, not error code,
+it should be checked whether it is null or not. 
+
+Signed-off-by: Insu Yun <wuninsu@gmail.com>
+---
+ drivers/infiniband/hw/usnic/usnic_ib_qp_grp.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/infiniband/hw/usnic/usnic_ib_qp_grp.c b/drivers/infiniband/hw/usnic/usnic_ib_qp_grp.c
+index db3588d..a678a66 100644
+--- a/drivers/infiniband/hw/usnic/usnic_ib_qp_grp.c
++++ b/drivers/infiniband/hw/usnic/usnic_ib_qp_grp.c
+@@ -221,8 +221,8 @@ create_roce_custom_flow(struct usnic_ib_qp_grp *qp_grp,
+ 
+ 	/* Create Flow Handle */
+ 	qp_flow = kzalloc(sizeof(*qp_flow), GFP_ATOMIC);
+-	if (IS_ERR_OR_NULL(qp_flow)) {
+-		err = qp_flow ? PTR_ERR(qp_flow) : -ENOMEM;
++	if (!qp_flow) {
++		err = -ENOMEM;
+ 		goto out_dealloc_flow;
+ 	}
+ 	qp_flow->flow = flow;
+@@ -296,8 +296,8 @@ create_udp_flow(struct usnic_ib_qp_grp *qp_grp,
+ 
+ 	/* Create qp_flow */
+ 	qp_flow = kzalloc(sizeof(*qp_flow), GFP_ATOMIC);
+-	if (IS_ERR_OR_NULL(qp_flow)) {
+-		err = qp_flow ? PTR_ERR(qp_flow) : -ENOMEM;
++	if (!qp_flow) {
++		err = -ENOMEM;
+ 		goto out_dealloc_flow;
+ 	}
+ 	qp_flow->flow = flow;
+-- 
+1.9.1
+

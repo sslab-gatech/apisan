@@ -1,0 +1,29 @@
+From 104a16273a5031cf1289c88b28011dc44b43dc27 Mon Sep 17 00:00:00 2001
+From: Insu Yun <wuninsu@gmail.com>
+Date: Mon, 15 Feb 2016 21:23:18 -0500
+Subject: [PATCH] et131x: check return value of dma_alloc_coherent
+
+For error handling, dma_alloc_coherent's return value
+needs to be checked, not argument.
+
+Signed-off-by: Insu Yun <wuninsu@gmail.com>
+---
+ drivers/net/ethernet/agere/et131x.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/net/ethernet/agere/et131x.c b/drivers/net/ethernet/agere/et131x.c
+index 3f3bcbe..0907ab6 100644
+--- a/drivers/net/ethernet/agere/et131x.c
++++ b/drivers/net/ethernet/agere/et131x.c
+@@ -2380,7 +2380,7 @@ static int et131x_tx_dma_memory_alloc(struct et131x_adapter *adapter)
+ 						    sizeof(u32),
+ 						    &tx_ring->tx_status_pa,
+ 						    GFP_KERNEL);
+-	if (!tx_ring->tx_status_pa) {
++	if (!tx_ring->tx_status) {
+ 		dev_err(&adapter->pdev->dev,
+ 			"Cannot alloc memory for Tx status block\n");
+ 		return -ENOMEM;
+-- 
+1.9.1
+

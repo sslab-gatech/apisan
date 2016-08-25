@@ -1,0 +1,28 @@
+From 118182264720191ff5bf23a1b8596d6857e8bad0 Mon Sep 17 00:00:00 2001
+From: Insu Yun <wuninsu@gmail.com>
+Date: Mon, 15 Feb 2016 21:29:38 -0500
+Subject: [PATCH] tcp: correctly crypto_alloc_hash return check
+
+crypto_alloc_hash never returns NULL
+
+Signed-off-by: Insu Yun <wuninsu@gmail.com>
+---
+ net/ipv4/tcp.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/net/ipv4/tcp.c b/net/ipv4/tcp.c
+index fd17eec..a95aac1 100644
+--- a/net/ipv4/tcp.c
++++ b/net/ipv4/tcp.c
+@@ -2946,7 +2946,7 @@ static void __tcp_alloc_md5sig_pool(void)
+ 			struct crypto_hash *hash;
+ 
+ 			hash = crypto_alloc_hash("md5", 0, CRYPTO_ALG_ASYNC);
+-			if (IS_ERR_OR_NULL(hash))
++			if (IS_ERR(hash))
+ 				return;
+ 			per_cpu(tcp_md5sig_pool, cpu).md5_desc.tfm = hash;
+ 		}
+-- 
+1.9.1
+

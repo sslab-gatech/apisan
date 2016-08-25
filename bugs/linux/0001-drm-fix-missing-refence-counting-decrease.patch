@@ -1,0 +1,28 @@
+From 476c33ed2dd01d947054d77236e0c5e2f75b12b3 Mon Sep 17 00:00:00 2001
+From: Insu Yun <wuninsu@gmail.com>
+Date: Mon, 1 Feb 2016 11:07:35 -0500
+Subject: [PATCH] drm: fix missing reference counting decrease
+
+In drm_dp_mst_allocate_vcpi, it returns true in two paths,
+but in one path, there is no reference couting decrease.
+
+Signed-off-by: Insu Yun <wuninsu@gmail.com>
+---
+ drivers/gpu/drm/drm_dp_mst_topology.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/gpu/drm/drm_dp_mst_topology.c b/drivers/gpu/drm/drm_dp_mst_topology.c
+index 6ed90a2..fe273b6 100644
+--- a/drivers/gpu/drm/drm_dp_mst_topology.c
++++ b/drivers/gpu/drm/drm_dp_mst_topology.c
+@@ -2446,6 +2446,7 @@ bool drm_dp_mst_allocate_vcpi(struct drm_dp_mst_topology_mgr *mgr, struct drm_dp
+ 		DRM_DEBUG_KMS("payload: vcpi %d already allocated for pbn %d - requested pbn %d\n", port->vcpi.vcpi, port->vcpi.pbn, pbn);
+ 		if (pbn == port->vcpi.pbn) {
+ 			*slots = port->vcpi.num_slots;
++			drm_dp_put_port(port);
+ 			return true;
+ 		}
+ 	}
+-- 
+1.9.1
+

@@ -1,0 +1,67 @@
+diff -uNr lprng-3.8.C/src/auth/ssl_auth.c lprng-3.8.C-new/src/auth/ssl_auth.c
+--- lprng-3.8.C/src/auth/ssl_auth.c	2012-06-23 03:03:56.000000000 -0400
++++ lprng-3.8.C-new/src/auth/ssl_auth.c	2015-11-20 14:33:06.193901956 -0500
+@@ -409,6 +409,8 @@
+ 	long verify_result;
+ 	char buffer[SMALLBUFFER];
+ 	int status = 0;
++	X509 *peer;
++
+ 
+ 	/* we get the SSL context.  No connection yet */
+ 	ssl = SSL_new(ctx);
+@@ -447,17 +449,19 @@
+ 
+ 
+ 	/* now we check to see which server we talked to */
++	peer = SSL_get_peer_certificate(ssl);
+ 	verify_result = SSL_get_verify_result(ssl);
+ 	DEBUG1("Open_SSL_connection: SSL_get_verify_result '%s'",
+ 		X509_verify_cert_error_string(verify_result) );
+ 
+-	if( verify_result != X509_V_OK ){
++	if( !peer || verify_result != X509_V_OK ){
+ 		plp_snprintf(errmsg,errlen,
+ 		 	"SSL_connect failed, peer certificat not verified: '%s'",
+ 				X509_verify_cert_error_string(verify_result) );
+ 		status = -1;
+ 		goto done;
+ 	}
++	X509_free( peer );
+ 	Get_cert_info( ssl, info );
+ 
+  done:
+@@ -484,10 +488,11 @@
+ 	char buffer[SMALLBUFFER];
+ 	int wait_for_read, wait_for_write;	/* for select */
+ 	int status = 0;
++	X509 *peer;
+ 
+ 	/* we get the SSL context.  No connection yet */
+ 	DEBUG1("Accept_SSL_connection: starting, ctx 0x%lx, sock %d", Cast_ptr_to_long(ctx), sock);
+-	
++
+ 	ssl = SSL_new(ctx);
+ 	DEBUG1("Accept_SSL_connection: SSL_new 0x%lx", Cast_ptr_to_long(ssl) );
+ 	if( !ssl ){
+@@ -553,17 +558,19 @@
+ 		}
+ 	}
+ 	/* now we check to see which server we talked to */
++	peer = SSL_get_peer_certificate(ssl);
+ 	verify_result = SSL_get_verify_result(ssl);
+ 	DEBUG1("Accept_SSL_connection: SSL_get_verify_result '%s'",
+ 		X509_verify_cert_error_string(verify_result) );
+ 
+-	if( verify_result != X509_V_OK ){
++	if( !peer || verify_result != X509_V_OK ){
+ 		plp_snprintf(errmsg,errlen,
+ 		 	"SSL_connect failed, peer certificat not verified: '%s'",
+ 				X509_verify_cert_error_string(verify_result) );
+ 		status = -1;
+ 		goto done;
+ 	}
++	X509_free( peer );
+ 	Get_cert_info( ssl, info );
+ 
+  done:

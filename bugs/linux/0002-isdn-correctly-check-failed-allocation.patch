@@ -1,0 +1,33 @@
+From d08b05167ac033da8d422b63c8955ed295b493f4 Mon Sep 17 00:00:00 2001
+From: Insu Yun <wuninsu@gmail.com>
+Date: Thu, 15 Oct 2015 10:25:20 +0000
+Subject: [PATCH 2/2] isdn: correctly check failed allocation
+
+Since skb_clone is memory allocation, it could be failed when lack of resource.
+Therefore, return value of skb_clone needs to be checked and handle error.
+
+Signed-off-by: Insu Yun <wuninsu@gmail.com>
+---
+ drivers/isdn/mISDN/layer2.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/drivers/isdn/mISDN/layer2.c b/drivers/isdn/mISDN/layer2.c
+index 949cabb..888c610 100644
+--- a/drivers/isdn/mISDN/layer2.c
++++ b/drivers/isdn/mISDN/layer2.c
+@@ -1509,6 +1509,12 @@ l2_pull_iqueue(struct FsmInst *fi, int event, void *arg)
+ 	}
+ 
+ 	nskb = skb_clone(skb, GFP_ATOMIC);
++  if (!nskb) {
++			printk(KERN_WARNING "%s: no skb mem in %s\n",
++			       mISDNDevName4ch(&l2->ch), __func__);
++			return;
++  }
++
+ 	p1 = skb_headroom(nskb);
+ 	if (p1 >= i)
+ 		memcpy(skb_push(nskb, i), header, i);
+-- 
+1.9.1
+

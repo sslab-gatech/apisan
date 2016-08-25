@@ -1,0 +1,30 @@
+From 355e130f93fc8c9c097f24ee4a81a623b7a4df14 Mon Sep 17 00:00:00 2001
+From: Insu Yun <wuninsu@gmail.com>
+Date: Mon, 1 Feb 2016 10:53:13 -0500
+Subject: [PATCH] aoe: remove unnecessary check for failing kthread creation
+
+When kthread_run fails, it returns ERR, not NULL.
+Therefore, NULL checking is redundant. 
+(https://www.kernel.org/doc/htmldocs/device-drivers/API-kthread-run.html)
+
+Signed-off-by: Insu Yun <wuninsu@gmail.com>
+---
+ drivers/block/aoe/aoecmd.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/block/aoe/aoecmd.c b/drivers/block/aoe/aoecmd.c
+index d048d20..4213114 100644
+--- a/drivers/block/aoe/aoecmd.c
++++ b/drivers/block/aoe/aoecmd.c
+@@ -1327,7 +1327,7 @@ aoe_ktstart(struct ktstate *k)
+ 
+ 	init_completion(&k->rendez);
+ 	task = kthread_run(kthread, k, "%s", k->name);
+-	if (task == NULL || IS_ERR(task))
++	if (IS_ERR(task))
+ 		return -ENOMEM;
+ 	k->task = task;
+ 	wait_for_completion(&k->rendez); /* allow kthread to start */
+-- 
+1.9.1
+

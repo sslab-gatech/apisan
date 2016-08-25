@@ -1,0 +1,31 @@
+From b55de4568f5addd71be4c9587a8f7b49efdaaf1a Mon Sep 17 00:00:00 2001
+From: Insu Yun <wuninsu@gmail.com>
+Date: Thu, 4 Feb 2016 18:15:58 -0500
+Subject: [PATCH] qxl: handling failed allocation
+
+Since kmalloc can be failed in memory pressure,
+check and return error code
+otherwise NULL deference could be happened
+
+Signed-off-by: Insu Yun <wuninsu@gmail.com>
+---
+ drivers/gpu/drm/qxl/qxl_kms.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/drivers/gpu/drm/qxl/qxl_kms.c b/drivers/gpu/drm/qxl/qxl_kms.c
+index b2977a1..02d26b3 100644
+--- a/drivers/gpu/drm/qxl/qxl_kms.c
++++ b/drivers/gpu/drm/qxl/qxl_kms.c
+@@ -221,6 +221,9 @@ static int qxl_device_init(struct qxl_device *qdev,
+ 		kmalloc(qdev->n_mem_slots * sizeof(struct qxl_memslot),
+ 			GFP_KERNEL);
+ 
++	if (!qdev->mem_slots)
++		return -ENOMEM;
++
+ 	idr_init(&qdev->release_idr);
+ 	spin_lock_init(&qdev->release_idr_lock);
+ 	spin_lock_init(&qdev->release_lock);
+-- 
+1.9.1
+

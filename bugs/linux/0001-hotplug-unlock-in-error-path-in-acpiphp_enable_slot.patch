@@ -1,0 +1,32 @@
+From af341f152cf00125b955c68ff4605211f30b709c Mon Sep 17 00:00:00 2001
+From: Insu Yun <wuninsu@gmail.com>
+Date: Sat, 23 Jan 2016 15:40:00 -0500
+Subject: [PATCH] hotplug: unlock in error path in acpiphp_enable_slot
+
+In acpiphp_enable_slot, there is a missing unlock path
+when error occurred. It needs to be unlocked before returning an error.
+
+Signed-off-by: Insu Yun <wuninsu@gmail.com>
+---
+ drivers/pci/hotplug/acpiphp_glue.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/pci/hotplug/acpiphp_glue.c b/drivers/pci/hotplug/acpiphp_glue.c
+index ff53856..0b3e0bf 100644
+--- a/drivers/pci/hotplug/acpiphp_glue.c
++++ b/drivers/pci/hotplug/acpiphp_glue.c
+@@ -953,8 +953,10 @@ int acpiphp_enable_slot(struct acpiphp_slot *slot)
+ {
+ 	pci_lock_rescan_remove();
+ 
+-	if (slot->flags & SLOT_IS_GOING_AWAY)
++	if (slot->flags & SLOT_IS_GOING_AWAY) {
++		pci_unlock_rescan_remove();
+ 		return -ENODEV;
++	}
+ 
+ 	/* configure all functions */
+ 	if (!(slot->flags & SLOT_ENABLED))
+-- 
+1.9.1
+

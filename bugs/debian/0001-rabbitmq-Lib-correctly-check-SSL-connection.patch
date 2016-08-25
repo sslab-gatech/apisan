@@ -1,0 +1,52 @@
+From 0e451f03d2797fc0e278810452a6e5608980b4bc Mon Sep 17 00:00:00 2001
+From: Insu Yun <wuninsu@gmail.com>
+Date: Fri, 20 Nov 2015 14:08:11 -0500
+Subject: [PATCH] Lib: correctly check SSL connection
+
+According to "https://www.openssl.org/docs/manmaster/ssl/SSL_get_verify_result.html",
+to verify SSL connection result, SSL_get_verify_result() needs to be
+called with SSL_get_peer_certificate(). In default mode, which
+verify_peer and verify_hostname are activated, then there is no problem
+because in verify_hostname, the existence of certificate is confirmed.
+However, it is possible that the user want to verify_peer,
+but not verify_host. In such case, it is not working as they wanted.
+Because with invalid certificate, the attacker can bypass certificate validity check.
+
+Signed-off-by: Insu Yun <wuninsu@gmail.com>
+---
+ librabbitmq/amqp_openssl.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/librabbitmq/amqp_openssl.c b/librabbitmq/amqp_openssl.c
+index 42c8f5b..2647df0 100644
+--- a/librabbitmq/amqp_openssl.c
++++ b/librabbitmq/amqp_openssl.c
+@@ -183,6 +183,7 @@ amqp_ssl_socket_open(void *base, const char *host, int port, struct timeval *tim
+   long result;
+   int status;
+   amqp_time_t deadline;
++  X509 *cert;
+   if (-1 != self->sockfd) {
+     return AMQP_STATUS_SOCKET_INUSE;
+   }
+@@ -236,12 +237,14 @@ start_connect:
+   }
+ 
+   if (self->verify_peer) {
++    cert = SSL_get_peer_certificate(self->ssl);
+     result = SSL_get_verify_result(self->ssl);
+-    if (X509_V_OK != result) {
++    if (!cert || X509_V_OK != result) {
+       self->internal_error = result;
+       status = AMQP_STATUS_SSL_PEER_VERIFY_FAILED;
+       goto error_out3;
+     }
++    X509_free(cert);
+   }
+   if (self->verify_hostname) {
+     int verify_status = amqp_ssl_socket_verify_hostname(self, host);
+-- 
+1.9.1
+
+
+// https://github.com/alanxz/rabbitmq-c/pull/329

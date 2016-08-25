@@ -1,0 +1,41 @@
+From 5593b693e07f86a7a957238c8ddc52fbc22919f1 Mon Sep 17 00:00:00 2001
+From: Insu Yun <wuninsu@gmail.com>
+Date: Thu, 15 Oct 2015 21:13:43 +0000
+Subject: [PATCH] usnic: correctly check failed allocation
+
+Since ib_alloc_device returns allocated memory address, not error,
+it should be checked as IS_NULL, not IS_ERR_OR_NULL.
+
+Signed-off-by: Insu Yun <wuninsu@gmail.com>
+---
+ drivers/infiniband/hw/usnic/usnic_ib_main.c | 9 ++++-----
+ 1 file changed, 4 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/infiniband/hw/usnic/usnic_ib_main.c b/drivers/infiniband/hw/usnic/usnic_ib_main.c
+index 34c49b8..cbc0514 100644
+--- a/drivers/infiniband/hw/usnic/usnic_ib_main.c
++++ b/drivers/infiniband/hw/usnic/usnic_ib_main.c
+@@ -328,16 +328,15 @@ static void *usnic_ib_device_add(struct pci_dev *dev)
+ 	netdev = pci_get_drvdata(dev);
+ 
+ 	us_ibdev = (struct usnic_ib_dev *)ib_alloc_device(sizeof(*us_ibdev));
+-	if (IS_ERR_OR_NULL(us_ibdev)) {
++	if (!us_ibdev) {
+ 		usnic_err("Device %s context alloc failed\n",
+ 				netdev_name(pci_get_drvdata(dev)));
+-		return ERR_PTR(us_ibdev ? PTR_ERR(us_ibdev) : -EFAULT);
++		return ERR_PTR(-EFAULT);
+ 	}
+ 
+ 	us_ibdev->ufdev = usnic_fwd_dev_alloc(dev);
+-	if (IS_ERR_OR_NULL(us_ibdev->ufdev)) {
+-		usnic_err("Failed to alloc ufdev for %s with err %ld\n",
+-				pci_name(dev), PTR_ERR(us_ibdev->ufdev));
++	if (!us_ibdev->ufdev) {
++		usnic_err("Failed to alloc ufdev for %s\n", pci_name(dev));
+ 		goto err_dealloc;
+ 	}
+ 
+-- 
+1.9.1
+

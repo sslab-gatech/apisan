@@ -1,0 +1,2 @@
+https://bugs.php.net/bug.php?id=71449
+

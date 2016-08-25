@@ -1,0 +1,29 @@
+From 9cb856cb7ee1c9ceea0392d0e5bdf1a5caf85e4a Mon Sep 17 00:00:00 2001
+From: Insu Yun <wuninsu@gmail.com>
+Date: Mon, 1 Feb 2016 10:49:55 -0500
+Subject: [PATCH] pvrusb2: correctly handling failed thread run
+
+Since kthread_run returns -ENOMEM if failed,
+it needs to be checked whether it is error, not whether it is null.
+
+Signed-off-by: Insu Yun <wuninsu@gmail.com>
+---
+ drivers/media/usb/pvrusb2/pvrusb2-context.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/media/usb/pvrusb2/pvrusb2-context.c b/drivers/media/usb/pvrusb2/pvrusb2-context.c
+index fd888a6..aabdc58 100644
+--- a/drivers/media/usb/pvrusb2/pvrusb2-context.c
++++ b/drivers/media/usb/pvrusb2/pvrusb2-context.c
+@@ -196,7 +196,7 @@ int pvr2_context_global_init(void)
+ 	pvr2_context_thread_ptr = kthread_run(pvr2_context_thread_func,
+ 					      NULL,
+ 					      "pvrusb2-context");
+-	return (pvr2_context_thread_ptr ? 0 : -ENOMEM);
++	return IS_ERR(pvr2_context_thread_ptr) ? -ENOMEM : 0;
+ }
+ 
+ 
+-- 
+1.9.1
+

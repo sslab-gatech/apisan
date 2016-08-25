@@ -1,0 +1,40 @@
+From 702fbfc051215fb81cdc1cc732de9f340c4f54b9 Mon Sep 17 00:00:00 2001
+From: Insu Yun <wuninsu@gmail.com>
+Date: Tue, 29 Dec 2015 15:17:31 -0500
+Subject: [PATCH v2] mwifiex: correctly handling kzalloc
+
+Since kzalloc can be failed in memory pressure,
+it needs to be handled, otherwise NULL dereference could be happened
+
+Signed-off-by: Insu Yun <wuninsu@gmail.com>
+---
+ drivers/net/wireless/mwifiex/sdio.c | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/drivers/net/wireless/mwifiex/sdio.c b/drivers/net/wireless/mwifiex/sdio.c
+index 78a8474..a8af72d 100644
+--- a/drivers/net/wireless/mwifiex/sdio.c
++++ b/drivers/net/wireless/mwifiex/sdio.c
+@@ -2053,8 +2053,19 @@ static int mwifiex_init_sdio(struct mwifiex_adapter *adapter)
+ 	/* Allocate skb pointer buffers */
+ 	card->mpa_rx.skb_arr = kzalloc((sizeof(void *)) *
+ 				       card->mp_agg_pkt_limit, GFP_KERNEL);
++	if (!card->mpa_rx.skb_arr) {
++		kfree(card->mp_regs);
++		return -ENOMEM;
++	}
++
+ 	card->mpa_rx.len_arr = kzalloc(sizeof(*card->mpa_rx.len_arr) *
+ 				       card->mp_agg_pkt_limit, GFP_KERNEL);
++	if (!card->mpa_rx.len_arr) {
++		kfree(card->mp_regs);
++		kfree(card->mpa_rx.skb_arr);
++		return -ENOMEM;
++	}
++
+ 	ret = mwifiex_alloc_sdio_mpa_buffers(adapter,
+ 					     card->mp_tx_agg_buf_size,
+ 					     card->mp_rx_agg_buf_size);
+-- 
+1.9.1
+

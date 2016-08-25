@@ -1,0 +1,33 @@
+From be3768b7d1c604adc99999e7fbf65d66c5be295d Mon Sep 17 00:00:00 2001
+From: Insu Yun <wuninsu@gmail.com>
+Date: Thu, 15 Oct 2015 17:22:58 +0000
+Subject: [PATCH] xen-netback: correctly check failed allocation
+
+Since vzalloc can be failed in memory pressure,
+writes -ENOMEM to xenstore to indicate error.
+
+Signed-off-by: Insu Yun <wuninsu@gmail.com>
+---
+ drivers/net/xen-netback/xenbus.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/drivers/net/xen-netback/xenbus.c b/drivers/net/xen-netback/xenbus.c
+index 929a6e7..56ebd82 100644
+--- a/drivers/net/xen-netback/xenbus.c
++++ b/drivers/net/xen-netback/xenbus.c
+@@ -788,6 +788,12 @@ static void connect(struct backend_info *be)
+ 	/* Use the number of queues requested by the frontend */
+ 	be->vif->queues = vzalloc(requested_num_queues *
+ 				  sizeof(struct xenvif_queue));
++	if (!be->vif->queues) {
++		xenbus_dev_fatal(dev, -ENOMEM,
++				 "allocating queues");
++		return;
++	}
++
+ 	be->vif->num_queues = requested_num_queues;
+ 	be->vif->stalled_queues = requested_num_queues;
+ 
+-- 
+1.9.1
+

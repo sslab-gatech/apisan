@@ -1,0 +1,35 @@
+From 4cb4c3e273fcc819c21eb0d397ef6e7797ad974d Mon Sep 17 00:00:00 2001
+From: Insu Yun <wuninsu@gmail.com>
+Date: Fri, 29 Jan 2016 10:55:51 -0500
+Subject: [PATCH v2] emu10k1: correctly handling failed thread creation
+
+Since kthread_create can be failed, it needs to check
+whether error occurred and return error code.
+
+Signed-off-by: Insu Yun <wuninsu@gmail.com>
+---
+ sound/pci/emu10k1/emu10k1_main.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/sound/pci/emu10k1/emu10k1_main.c b/sound/pci/emu10k1/emu10k1_main.c
+index 28e2f8b..8914534 100644
+--- a/sound/pci/emu10k1/emu10k1_main.c
++++ b/sound/pci/emu10k1/emu10k1_main.c
+@@ -1141,6 +1141,14 @@ static int snd_emu10k1_emu1010_init(struct snd_emu10k1 *emu)
+ 		emu->emu1010.firmware_thread =
+ 			kthread_create(emu1010_firmware_thread, emu,
+ 				       "emu1010_firmware");
++		if (IS_ERR(emu->emu1010.firmware_thread)) {
++			err = PTR_ERR(emu->emu1010.firmware_thread);
++			emu->emu1010.firmware_thread = NULL;
++			dev_info(emu->card->dev,
++					"emu1010: Creating thread failed\n");
++			return err;
++		}
++
+ 		wake_up_process(emu->emu1010.firmware_thread);
+ 	}
+ 
+-- 
+1.9.1
+

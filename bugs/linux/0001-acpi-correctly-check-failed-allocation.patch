@@ -1,0 +1,29 @@
+From a0ffb1fd1382781c8705a27bf1ad1015f7149416 Mon Sep 17 00:00:00 2001
+From: Insu Yun <wuninsu@gmail.com>
+Date: Thu, 15 Oct 2015 10:11:15 +0000
+Subject: [PATCH] acpi:correctly check failed allocation
+
+Since kobject_create_and_add can be failed in memory pressure,
+return value need to be checked and return ENOMEM.
+
+Signed-off-by: Insu Yun <wuninsu@gmail.com>
+---
+ drivers/acpi/sysfs.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/acpi/sysfs.c b/drivers/acpi/sysfs.c
+index 40a4265..e712a7b 100644
+--- a/drivers/acpi/sysfs.c
++++ b/drivers/acpi/sysfs.c
+@@ -878,6 +878,8 @@ int __init acpi_sysfs_init(void)
+ 		return result;
+ 
+ 	hotplug_kobj = kobject_create_and_add("hotplug", acpi_kobj);
++  if (!hotplug_kobj)
++    return -ENOMEM;
+ 	result = sysfs_create_file(hotplug_kobj, &force_remove_attr.attr);
+ 	if (result)
+ 		return result;
+-- 
+1.9.1
+

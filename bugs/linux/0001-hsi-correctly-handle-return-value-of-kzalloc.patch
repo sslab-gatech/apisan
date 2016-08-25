@@ -1,0 +1,58 @@
+From e5fbc2bff7caebb1a45f53a9e3316a01bdf258e1 Mon Sep 17 00:00:00 2001
+From: Insu Yun <wuninsu@gmail.com>
+Date: Sat, 17 Oct 2015 19:23:33 +0000
+Subject: [PATCH] hsi: correctly handle return value of kzalloc
+
+Since kzalloc can be failed in memory pressure,
+its return value should be checked and handled.
+
+Signed-off-by: Insu Yun <wuninsu@gmail.com>
+---
+ drivers/hsi/hsi.c | 12 +++++++++++-
+ 1 file changed, 11 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/hsi/hsi.c b/drivers/hsi/hsi.c
+index fe93712..bda4c26 100644
+--- a/drivers/hsi/hsi.c
++++ b/drivers/hsi/hsi.c
+@@ -85,12 +85,14 @@ struct hsi_client *hsi_new_client(struct hsi_port *port,
+ 
+ 	cl = kzalloc(sizeof(*cl), GFP_KERNEL);
+ 	if (!cl)
+-		return NULL;
++		goto err;
+ 
+ 	cl->tx_cfg = info->tx_cfg;
+ 	if (cl->tx_cfg.channels) {
+ 		size = cl->tx_cfg.num_channels * sizeof(*cl->tx_cfg.channels);
+ 		cl->tx_cfg.channels = kzalloc(size , GFP_KERNEL);
++		if (!cl->tx_cfg.channels)
++			goto err_tx;
+ 		memcpy(cl->tx_cfg.channels, info->tx_cfg.channels, size);
+ 	}
+ 
+@@ -98,6 +100,8 @@ struct hsi_client *hsi_new_client(struct hsi_port *port,
+ 	if (cl->rx_cfg.channels) {
+ 		size = cl->rx_cfg.num_channels * sizeof(*cl->rx_cfg.channels);
+ 		cl->rx_cfg.channels = kzalloc(size , GFP_KERNEL);
++		if (!cl->rx_cfg.channels)
++			goto err_rx;
+ 		memcpy(cl->rx_cfg.channels, info->rx_cfg.channels, size);
+ 	}
+ 
+@@ -114,6 +118,12 @@ struct hsi_client *hsi_new_client(struct hsi_port *port,
+ 	}
+ 
+ 	return cl;
++err_rx:
++	kfree(cl->tx_cfg.channels);
++err_tx:
++	kfree(cl);
++err:
++	return NULL;
+ }
+ EXPORT_SYMBOL_GPL(hsi_new_client);
+ 
+-- 
+1.9.1
+

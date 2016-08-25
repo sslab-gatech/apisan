@@ -1,0 +1,44 @@
+From a1d15d172b8ffd4c98d8185285931878918a8652 Mon Sep 17 00:00:00 2001
+From: Insu Yun <wuninsu@gmail.com>
+Date: Mon, 19 Oct 2015 14:25:12 +0000
+Subject: [PATCH] devfreq: correctly check failed allocation
+
+Since devm_kzalloc can be failed in memory pressure,
+check return value and handle error.
+
+Signed-off-by: Insu Yun <wuninsu@gmail.com>
+---
+ drivers/devfreq/devfreq.c | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+
+diff --git a/drivers/devfreq/devfreq.c b/drivers/devfreq/devfreq.c
+index ca1b362..814089f 100644
+--- a/drivers/devfreq/devfreq.c
++++ b/drivers/devfreq/devfreq.c
+@@ -482,9 +482,23 @@ struct devfreq *devfreq_add_device(struct device *dev,
+ 						devfreq->profile->max_state *
+ 						devfreq->profile->max_state,
+ 						GFP_KERNEL);
++	if (!devfreq->trans_table) {
++		dev_err(dev, "%s: Unable to create transition table for the device\n",
++			__func__);
++		err = -ENOMEM;
++		goto err_dev;
++	}
++
+ 	devfreq->time_in_state = devm_kzalloc(dev, sizeof(unsigned int) *
+ 						devfreq->profile->max_state,
+ 						GFP_KERNEL);
++	if (!devfreq->time_in_state) {
++		dev_err(dev, "%s: Unable to create state for the device\n",
++			__func__);
++		err = -ENOMEM;
++		goto err_dev;
++	}
++
+ 	devfreq->last_stat_updated = jiffies;
+ 
+ 	dev_set_name(&devfreq->dev, "%s", dev_name(dev));
+-- 
+1.9.1
+

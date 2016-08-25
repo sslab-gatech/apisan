@@ -1,0 +1,35 @@
+From 3786c33744070255f9ba5b59948819ecd9c7accd Mon Sep 17 00:00:00 2001
+From: Insu Yun <wuninsu@gmail.com>
+Date: Mon, 1 Feb 2016 10:57:13 -0500
+Subject: [PATCH] usbvision: fix locking error
+
+When remove_pending is non-zero, v4l2_lock is never unlocked.
+
+Signed-off-by: Insu Yun <wuninsu@gmail.com>
+---
+ drivers/media/usb/usbvision/usbvision-video.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/media/usb/usbvision/usbvision-video.c b/drivers/media/usb/usbvision/usbvision-video.c
+index de9ff3b..75d06ea 100644
+--- a/drivers/media/usb/usbvision/usbvision-video.c
++++ b/drivers/media/usb/usbvision/usbvision-video.c
+@@ -1156,6 +1156,7 @@ static int usbvision_radio_close(struct file *file)
+ 	usbvision_audio_off(usbvision);
+ 	usbvision->radio = 0;
+ 	usbvision->user--;
++	mutex_unlock(&usbvision->v4l2_lock);
+ 
+ 	if (usbvision->remove_pending) {
+ 		printk(KERN_INFO "%s: Final disconnect\n", __func__);
+@@ -1164,7 +1165,6 @@ static int usbvision_radio_close(struct file *file)
+ 		return 0;
+ 	}
+ 
+-	mutex_unlock(&usbvision->v4l2_lock);
+ 	PDEBUG(DBG_IO, "success");
+ 	return v4l2_fh_release(file);
+ }
+-- 
+1.9.1
+

@@ -1,0 +1,31 @@
+From d0c477d99ec4bd4a295b31dfa04cf9ecec9cf9cf Mon Sep 17 00:00:00 2001
+From: Insu Yun <wuninsu@gmail.com>
+Date: Mon, 1 Feb 2016 20:54:33 -0500
+Subject: [PATCH] affs: add kunmap in error path
+
+When error occurs, it needs to unmap page.
+
+Signed-off-by: Insu Yun <wuninsu@gmail.com>
+---
+ fs/affs/file.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/fs/affs/file.c b/fs/affs/file.c
+index 0548c53..fa4f24e 100644
+--- a/fs/affs/file.c
++++ b/fs/affs/file.c
+@@ -520,8 +520,10 @@ affs_do_readpage_ofs(struct page *page, unsigned to)
+ 
+ 	while (pos < to) {
+ 		bh = affs_bread_ino(inode, bidx, 0);
+-		if (IS_ERR(bh))
++		if (IS_ERR(bh)) {
++			kunmap(page);
+ 			return PTR_ERR(bh);
++		}
+ 		tmp = min(bsize - boff, to - pos);
+ 		BUG_ON(pos + tmp > to || tmp > bsize);
+ 		memcpy(data + pos, AFFS_DATA(bh) + boff, tmp);
+-- 
+1.9.1
+

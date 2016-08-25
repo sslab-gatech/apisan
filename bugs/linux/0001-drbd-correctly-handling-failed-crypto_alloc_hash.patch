@@ -1,0 +1,28 @@
+From 61643f739315ff5fe75b7819a7669eeece302b72 Mon Sep 17 00:00:00 2001
+From: Insu Yun <wuninsu@gmail.com>
+Date: Mon, 15 Feb 2016 21:25:51 -0500
+Subject: [PATCH] drbd: correctly handling failed crypto_alloc_hash
+
+crypto_alloc_hash returns an error code, not NULL.
+
+Signed-off-by: Insu Yun <wuninsu@gmail.com>
+---
+ drivers/block/drbd/drbd_receiver.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/block/drbd/drbd_receiver.c b/drivers/block/drbd/drbd_receiver.c
+index 1957fe8..9063462 100644
+--- a/drivers/block/drbd/drbd_receiver.c
++++ b/drivers/block/drbd/drbd_receiver.c
+@@ -3403,7 +3403,7 @@ static int receive_protocol(struct drbd_connection *connection, struct packet_in
+ 		 */
+ 
+ 		peer_integrity_tfm = crypto_alloc_hash(integrity_alg, 0, CRYPTO_ALG_ASYNC);
+-		if (!peer_integrity_tfm) {
++		if (IS_ERR(peer_integrity_tfm)) {
+ 			drbd_err(connection, "peer data-integrity-alg %s not supported\n",
+ 				 integrity_alg);
+ 			goto disconnect;
+-- 
+1.9.1
+

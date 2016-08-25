@@ -1,0 +1,34 @@
+From e86cd25855acecee56be33c7105d0ed0efff5925 Mon Sep 17 00:00:00 2001
+From: Insu Yun <wuninsu@gmail.com>
+Date: Mon, 19 Oct 2015 16:01:50 +0000
+Subject: [PATCH] xen: check return value of xenbus_printf
+
+Signed-off-by: Insu Yun <wuninsu@gmail.com>
+---
+ drivers/input/misc/xen-kbdfront.c | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/input/misc/xen-kbdfront.c b/drivers/input/misc/xen-kbdfront.c
+index 23d0549..0a9ad2cf 100644
+--- a/drivers/input/misc/xen-kbdfront.c
++++ b/drivers/input/misc/xen-kbdfront.c
+@@ -129,8 +129,14 @@ static int xenkbd_probe(struct xenbus_device *dev,
+ 
+ 	if (xenbus_scanf(XBT_NIL, dev->otherend, "feature-abs-pointer", "%d", &abs) < 0)
+ 		abs = 0;
+-	if (abs)
+-		xenbus_printf(XBT_NIL, dev->nodename, "request-abs-pointer", "1");
++	if (abs) {
++		ret = xenbus_printf(XBT_NIL, dev->nodename,
++				    "request-abs-pointer", "1");
++		if (ret) {
++			pr_warning("xenkbd: can't request abs-pointer");
++			abs = 0;
++		}
++	}
+ 
+ 	/* keyboard */
+ 	kbd = input_allocate_device();
+-- 
+1.9.1
+

@@ -1,0 +1,35 @@
+From 7def98d491dd9edfec5ec96c94099e31eab1f581 Mon Sep 17 00:00:00 2001
+From: Insu Yun <wuninsu@gmail.com>
+Date: Tue, 12 Jan 2016 04:20:44 +0000
+Subject: [PATCH] phpdbg: fix potential format string bug
+
+Signed-off-by: Insu Yun <wuninsu@gmail.com>
+---
+ sapi/phpdbg/phpdbg_prompt.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/sapi/phpdbg/phpdbg_prompt.c b/sapi/phpdbg/phpdbg_prompt.c
+index 9724976..796519f 100644
+--- a/sapi/phpdbg/phpdbg_prompt.c
++++ b/sapi/phpdbg/phpdbg_prompt.c
+@@ -651,7 +651,7 @@ static inline void phpdbg_handle_exception(void) /* {{{ */
+ 
+ 	phpdbg_error("exception", "name=\"%s\" file=\"%s\" line=\"" ZEND_LONG_FMT "\"", "Uncaught %s in %s on line " ZEND_LONG_FMT, ZSTR_VAL(ex->ce->name), ZSTR_VAL(file), line);
+ 	zend_string_release(file);
+-	phpdbg_writeln("exceptionmsg", "msg=\"%s\"", ZSTR_VAL(msg));
++	phpdbg_writeln("exceptionmsg", "msg=\"%s\"", "%s", ZSTR_VAL(msg));
+ 	zend_string_release(msg);
+ 
+ 	if (EG(prev_exception)) {
+@@ -1627,7 +1627,7 @@ next:
+ 		     execute_data->call->func->type == ZEND_USER_FUNCTION) {
+ 			zend_execute_ex = execute_ex;
+ 		}
+-		PHPDBG_G(vmret) = zend_vm_call_opcode_handler(execute_data);		
++		PHPDBG_G(vmret) = zend_vm_call_opcode_handler(execute_data);
+ 		zend_execute_ex = phpdbg_execute_ex;
+ 
+ 		if (PHPDBG_G(vmret) != 0) {
+-- 
+1.9.1
+

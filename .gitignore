@@ -1,0 +1,31 @@
+/fs.img
+/bin/llvm/
+/private/
+
+*~
+*.as
+*#
+*.cmake
+*.def
+tags
+Release+Asserts
+
+# for testing
+test-as/Makefile
+
+# auto-generated
+*.llvm*
+*.config
+*.cfg
+*.log
+*.status
+*.spec
+*.bak
+
+
+llvm/include/llvm/Config/config.h
+llvm/include/llvm/Config/llvm-config.h
+llvm/include/llvm/Support/DataTypes.h
+
+# tmp directory
+tmp

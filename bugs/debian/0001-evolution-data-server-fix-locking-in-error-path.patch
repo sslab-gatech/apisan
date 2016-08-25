@@ -1,0 +1,29 @@
+From f7b8a242e2f12434f7e430701213a06ab49ac73e Mon Sep 17 00:00:00 2001
+From: Insu Yun <wuninsu@gmail.com>
+Date: Mon, 1 Feb 2016 23:44:49 -0500
+Subject: [PATCH] fix locking in error path
+
+In camel_key_table_add, when error occured,
+it does not unlock CAMEL_KEY_TABLE_UNLOCK.
+
+Signed-off-by: Insu Yun <wuninsu@gmail.com>
+---
+ camel/camel-partition-table.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/camel/camel-partition-table.c b/camel/camel-partition-table.c
+index 2e2fce4..2a2b6fe 100644
+--- a/camel/camel-partition-table.c
++++ b/camel/camel-partition-table.c
+@@ -791,7 +791,8 @@ camel_key_table_add (CamelKeyTable *ki,
+
+ 	if (kblast->used >=127) {
+ 		g_warning ("Invalid value for used %d\n", kblast->used);
+-		return 0;
++		keyid = 0;
++		goto fail;
+ 	}
+
+ 	camel_block_file_touch_block (ki->blocks, last);
+--
+1.8.5.2 (Apple Git-48)
