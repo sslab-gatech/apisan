@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 import os
 import sys
-from ply import yacc
-from ply.lex import TOKEN
+from .yacc import yacc
+from .lex import TOKEN
 from .slexer import SLexer
 from ..lib import dbg
 from .symbol import (
