@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-from ply import lex
-from ply.lex import TOKEN
+from .lex import lex, TOKEN
 import logging
 
 logger = logging.getLogger('SLexer')
