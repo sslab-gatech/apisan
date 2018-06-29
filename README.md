@@ -14,7 +14,7 @@ Environments
 ```
 - Run './configure'
 ```sh
-  $ apisan build ./configure
+  $ apisan build ./llvm/configure
   $ apisan build make
 ```
 - How to run a checker
