@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 #!/usr/bin/env python3
 from .checker import Checker, Context, BugReport
 from ..lib import rank_utils, config

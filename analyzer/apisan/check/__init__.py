@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 from apisan.parse.explorer import Explorer
 from apisan.check.argument import ArgChecker
 from apisan.check.causality import CausalityChecker

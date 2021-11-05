@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 #!/bin/bash
 LLVM_DIR=bin/llvm
 

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 #!/usr/bin/env python3
 from .checker import Checker, Context
 from ..lib import utils, rank_utils

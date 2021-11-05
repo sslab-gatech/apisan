@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 #!/usr/bin/env python3
 from ..parse.explorer import is_eop
 from ..lib import config
